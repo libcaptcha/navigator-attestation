@@ -108,6 +108,121 @@ const token = sign({ score: 0.95, verdict: 'trusted' }, key);
 const payload = verify(token, key); // null if invalid
 ```
 
+### Browser Fingerprinting
+
+Cross-session browser fingerprinting using 26 stable signal components (sync) plus 4 async components. Produces a deterministic 128-bit MurmurHash3 ID that persists across page reloads, new tabs, and browser restarts. Browser-aware stabilization automatically excludes signals known to be unreliable in specific browsers (e.g. canvas noise in Firefox/Brave, audio in Safari 17+, screen frame in Firefox).
+
+#### Synchronous (Browser)
+
+```js
+import { getFingerprint } from 'navigator-attestation';
+
+const { id, components, browser } = getFingerprint();
+// id: 32-char hex string (e.g. "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6")
+// components: collected signal data
+// browser: detected browser name
+```
+
+#### Async with Full Signals (Browser)
+
+```js
+import { getFingerprintAsync } from 'navigator-attestation';
+
+const { id, components } = await getFingerprintAsync();
+// Includes async components: voices, audioFingerprint,
+// permissions, webrtc
+```
+
+#### Custom Components
+
+```js
+import { getFingerprint, COMPONENT_NAMES } from 'navigator-attestation';
+
+// Only specific components
+const { id } = getFingerprint({
+    include: ['math', 'timezone', 'hardware', 'webgl'],
+});
+
+// Exclude unstable components
+const { id: stableId } = getFingerprint({
+    exclude: ['canvas', 'fonts'],
+});
+
+// Disable auto-stabilization
+const { id: rawId } = getFingerprint({
+    stabilize: false,
+});
+```
+
+#### Low-level Utilities
+
+```js
+import { collectComponents, murmurHash128, stableStringify } from 'navigator-attestation';
+
+// Collect raw components
+const components = collectComponents();
+
+// Stable JSON serialization (sorted keys)
+const canonical = stableStringify(components);
+
+// MurmurHash3 x86 128-bit
+const hash = murmurHash128(canonical);
+```
+
+## Fingerprint Components
+
+### Sync Components (26)
+
+| Component          | Signals                                       | Stability |
+| ------------------ | --------------------------------------------- | --------- |
+| `platform`         | platform, vendor, productSub, oscpu           | High      |
+| `hardware`         | cores, memory, touch points, CPU architecture | High      |
+| `screen`           | colorDepth, pixelDepth, devicePixelRatio      | High      |
+| `screenResolution` | width x height (sorted descending)            | High      |
+| `screenFrame`      | bezel sizes [top, right, bottom, left]        | High      |
+| `timezone`         | offset, IANA name                             | High      |
+| `languages`        | language, languages list                      | High      |
+| `math`             | 14 Math function results (engine-specific)    | High      |
+| `webgl`            | GPU vendor, renderer, extensions, params      | High      |
+| `canvas`           | Rendered hash (3x majority vote)              | Medium    |
+| `fonts`            | 50 font availability probes                   | Medium    |
+| `fontPreferences`  | default text width across 7 font presets      | High      |
+| `audio`            | AudioContext baseLatency, maxChannels         | Medium    |
+| `plugins`          | Navigator plugin list                         | High      |
+| `mediaQueries`     | color gamut, HDR, motion, transparency, hover | High      |
+| `contrast`         | prefers-contrast level (-1, 0, 1, 10)         | High      |
+| `monochrome`       | monochrome color depth (binary search)        | High      |
+| `storage`          | localStorage, sessionStorage, indexedDB       | High      |
+| `engine`           | eval length, stack trace style (V8/SM/JSC)    | High      |
+| `vendorFlavors`    | window.chrome, window.safari, etc.            | High      |
+| `cssVersion`       | CSS feature detection version                 | High      |
+| `pdfViewer`        | PDF viewer enabled                            | High      |
+| `cookies`          | Cookies enabled                               | High      |
+| `applePay`         | ApplePaySession capability (-2 to 1)          | High      |
+| `dateTimeLocale`   | Intl.DateTimeFormat locale string             | High      |
+| `domBlockers`      | Ad blocker detection via CSS selectors        | Medium    |
+
+### Async Components (4, via `getFingerprintAsync`)
+
+| Component          | Signals                                  | Stability |
+| ------------------ | ---------------------------------------- | --------- |
+| `voices`           | speechSynthesis voice list               | Medium    |
+| `audioFingerprint` | OfflineAudioContext sample hash          | Medium    |
+| `permissions`      | 23 permission states via Permissions API | High      |
+| `webrtc`           | SDP codec counts, RTP extension count    | High      |
+
+### Auto-Stabilization
+
+Unreliable signals are automatically excluded per browser:
+
+| Browser    | Excluded Components                                                   |
+| ---------- | --------------------------------------------------------------------- |
+| Brave      | canvas, audio, fonts, deviceMemory, concurrency, plugins, domBlockers |
+| Firefox    | canvas, fonts, screenFrame                                            |
+| Safari 17+ | canvas, audio                                                         |
+| Samsung    | audio                                                                 |
+| Chrome     | _(none)_                                                              |
+
 ## Protocol
 
 ```

@@ -414,3 +414,168 @@ export declare function verify(
 export declare function generateNonce(): string;
 
 export declare function generateKey(): string;
+
+export interface FingerprintPlatform {
+  platform: string;
+  vendor: string;
+  productSub: string;
+  oscpu?: string;
+}
+
+export interface FingerprintHardware {
+  concurrency: number;
+  deviceMemory?: number;
+  maxTouchPoints: number;
+  architecture: number;
+}
+
+export interface FingerprintScreen {
+  colorDepth: number;
+  pixelDepth: number;
+  devicePixelRatio: number;
+}
+
+export interface FingerprintTimezone {
+  offset: number;
+  name: string;
+}
+
+export interface FingerprintLanguages {
+  language: string;
+  languages: string[];
+}
+
+export interface FingerprintMath {
+  acos: number;
+  acosh: number;
+  asin: number;
+  atan: number;
+  atanh: number;
+  cbrt: number;
+  cos: number;
+  cosh: number;
+  expm1: number;
+  log1p: number;
+  sin: number;
+  sinh: number;
+  tan: number;
+  tanh: number;
+}
+
+export interface FingerprintWebGL {
+  vendor: string;
+  renderer: string;
+  shadingVersion: string;
+  maxTextureSize: number;
+  maxRenderbufferSize: number;
+  extensions: string[];
+}
+
+export interface FingerprintCanvas {
+  hash: string | null;
+  stable: boolean;
+}
+
+export interface FingerprintAudio {
+  baseLatency?: number;
+  maxChannels: number;
+}
+
+export interface FingerprintPlugin {
+  name: string;
+  filename: string;
+}
+
+export interface FingerprintMediaQueries {
+  colorGamutP3: boolean;
+  colorGamutSrgb: boolean;
+  hdr: boolean;
+  invertedColors: boolean;
+  forcedColors: boolean;
+  monochrome: boolean;
+  reducedMotion: boolean;
+  reducedTransparency: boolean;
+  hover: boolean;
+  pointer: boolean;
+}
+
+export interface FingerprintStorage {
+  localStorage: boolean;
+  sessionStorage: boolean;
+  indexedDB: boolean;
+  openDatabase: boolean;
+}
+
+export interface FingerprintEngine {
+  evalLength: number;
+  stackStyle: "v8" | "spidermonkey" | "jsc" | "unknown";
+}
+
+export interface FingerprintVoice {
+  name: string;
+  lang: string;
+  uri: string;
+  local: boolean;
+}
+
+export interface FingerprintComponents {
+  platform?: FingerprintPlatform;
+  hardware?: FingerprintHardware;
+  screen?: FingerprintScreen;
+  timezone?: FingerprintTimezone;
+  languages?: FingerprintLanguages;
+  math?: FingerprintMath;
+  webgl?: FingerprintWebGL | null;
+  canvas?: FingerprintCanvas;
+  fonts?: string[];
+  audio?: FingerprintAudio | null;
+  plugins?: FingerprintPlugin[];
+  mediaQueries?: FingerprintMediaQueries | null;
+  storage?: FingerprintStorage;
+  engine?: FingerprintEngine;
+  vendorFlavors?: string[];
+  cssVersion?: number;
+  pdfViewer?: boolean;
+  cookies?: boolean;
+  voices?: FingerprintVoice[] | null;
+}
+
+export interface FingerprintOptions {
+  include?: string[];
+  exclude?: string[];
+  stabilize?: boolean;
+}
+
+export interface FingerprintResult {
+  id: string;
+  components: FingerprintComponents;
+  browser: string;
+}
+
+export declare function getFingerprint(
+  options?: FingerprintOptions
+): FingerprintResult;
+
+export declare function getFingerprintAsync(
+  options?: FingerprintOptions
+): Promise<FingerprintResult>;
+
+export declare function collectComponents(
+  options?: FingerprintOptions
+): FingerprintComponents;
+
+export declare function murmurHash128(
+  input: string | ArrayBuffer,
+  seed?: number
+): string;
+
+export declare function stableStringify(
+  data: unknown
+): string;
+
+export declare const COMPONENTS: Record<
+  string,
+  () => unknown
+>;
+
+export declare const COMPONENT_NAMES: string[];

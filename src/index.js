@@ -18,3 +18,13 @@ export {
     generateNonce,
     generateKey,
 } from './protocol.js';
+
+export {
+    getFingerprint,
+    getFingerprintAsync,
+    collectComponents,
+    murmurHash128,
+    stableStringify,
+    COMPONENTS,
+    COMPONENT_NAMES,
+} from './fingerprint.js';
