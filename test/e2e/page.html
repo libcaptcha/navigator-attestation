@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+    <body>
+        <pre id="result">collecting...</pre>
+        <script type="module">
+            import { collectSignals } from '/signals.js';
+            try {
+                const signals = collectSignals();
+                window.__signals = signals;
+                const response = await fetch('/attest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signals }),
+                });
+                const result = await response.json();
+                window.__attestResult = result;
+                document.getElementById('result').textContent = JSON.stringify(result);
+            } catch (error) {
+                window.__attestResult = {
+                    error: error.message,
+                    score: -1,
+                    flags: [],
+                    verdict: 'error',
+                };
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        </script>
+    </body>
+</html>

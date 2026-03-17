@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Navigator Attestation Demo</title>
+        <style>
+            body {
+                font-family: system-ui;
+                max-width: 720px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            pre {
+                background: #f4f4f4;
+                padding: 1rem;
+                overflow-x: auto;
+                border-radius: 4px;
+            }
+            button {
+                padding: 0.5rem 1rem;
+                margin: 0.5rem 0.5rem 0.5rem 0;
+                cursor: pointer;
+            }
+            .score {
+                font-size: 2rem;
+                font-weight: bold;
+            }
+            .trusted {
+                color: #2a7;
+            }
+            .suspicious {
+                color: #c80;
+            }
+            .likely_automated {
+                color: #c44;
+            }
+            .automated {
+                color: #900;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Navigator Attestation</h1>
+        <button id="simple">Simple Attestation</button>
+        <button id="secure">Secure Multi-Round</button>
+        <div id="output"></div>
+
+        <script type="module">
+            import { collectSignals } from '../src/signals.js';
+
+            const output = document.getElementById('output');
+
+            function render(result) {
+                output.innerHTML = `
+        <p class="score ${result.verdict}">${result.score} — ${result.verdict}</p>
+        <p>${result.flags?.length || 0} flags</p>
+        <pre>${JSON.stringify(result, null, 2)}</pre>
+      `;
+            }
+
+            document.getElementById('simple').onclick = async () => {
+                output.textContent = 'Collecting signals...';
+                const signals = collectSignals();
+                const response = await fetch('/attest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signals, ts: Date.now() }),
+                });
+                render(await response.json());
+            };
+
+            document.getElementById('secure').onclick = () => {
+                output.textContent = 'Connecting...';
+                const ws = new WebSocket(`ws://${location.host}`);
+
+                ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+
+                    if (message.type === 'challenge') {
+                        output.textContent = `Round ${message.round}/${message.totalRounds}...`;
+                        const signals = collectSignals(message.checks);
+                        ws.send(
+                            JSON.stringify({
+                                nonce: message.nonce,
+                                round: message.round,
+                                signals,
+                            })
+                        );
+                        return;
+                    }
+
+                    if (message.type === 'result') {
+                        ws.close();
+                        render(message);
+                        return;
+                    }
+
+                    if (message.type === 'error') {
+                        ws.close();
+                        output.textContent = `Error: ${message.reason}`;
+                    }
+                };
+
+                ws.onerror = () => {
+                    output.textContent = 'WebSocket error';
+                };
+            };
+        </script>
+    </body>
+</html>

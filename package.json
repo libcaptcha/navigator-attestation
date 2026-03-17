@@ -1,0 +1,49 @@
+{
+    "name": "navigator-attestation",
+    "version": "1.0.0",
+    "description": "Browser environment attestation via signal collection and validation. Detects automation, headless browsers, spoofing, and virtualization.",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/libcaptcha/navigator-attestation"
+    },
+    "main": "./src/index.js",
+    "types": "./src/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./src/index.d.ts",
+            "default": "./src/index.js"
+        }
+    },
+    "files": [
+        "src/"
+    ],
+    "scripts": {
+        "test": "node --test test/*.test.js",
+        "test:e2e": "node --test test/e2e/puppeteer.test.js",
+        "test:e2e:python": "pytest test/e2e/test_detection.py -v",
+        "example": "node example/server.js"
+    },
+    "keywords": [
+        "attestation",
+        "bot-detection",
+        "headless",
+        "puppeteer",
+        "fingerprint",
+        "webdriver",
+        "anti-automation"
+    ],
+    "author": "libcaptcha",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18"
+    },
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "puppeteer": "^24.0.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2"
+    }
+}
