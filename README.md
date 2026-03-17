@@ -315,5 +315,3 @@ npx prtfm
 ## License
 
 [MIT](LICENSE)
-
-javascript browser security fingerprinting bot-detection automation-detection headless-browser anti-bot
