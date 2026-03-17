@@ -191,7 +191,6 @@ npm run test:e2e          # puppeteer detection
 npm run test:e2e:python   # selenium/playwright detection
 ```
 
-
 ## Formatting
 
 ```bash
@@ -201,3 +200,5 @@ npx prtfm
 ## License
 
 [MIT](LICENSE)
+
+javascript browser security fingerprinting bot-detection automation-detection headless-browser anti-bot
