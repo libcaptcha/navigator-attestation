@@ -13,9 +13,14 @@ const secureServer = createSecureServer({ roundCount: 3 });
 const httpServer = createServer((request, response) => {
     if (request.url === '/' || request.url === '/index.html') {
         const html = readFileSync(join(__dirname, 'public/index.html'), 'utf-8');
-        response.writeHead(200, {
-            'Content-Type': 'text/html',
-        });
+        response.writeHead(200, { 'Content-Type': 'text/html' });
+        response.end(html);
+        return;
+    }
+
+    if (request.url === '/fingerprint' || request.url === '/fingerprint.html') {
+        const html = readFileSync(join(__dirname, 'public/fingerprint.html'), 'utf-8');
+        response.writeHead(200, { 'Content-Type': 'text/html' });
         response.end(html);
         return;
     }

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Browser Fingerprinting Demo</title>
+        <style>
+            body {
+                font-family: system-ui;
+                max-width: 820px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+                color: #222;
+            }
+            h1 {
+                margin-bottom: 0.25rem;
+            }
+            p.subtitle {
+                color: #666;
+                margin-top: 0.25rem;
+            }
+            .actions {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin: 1.25rem 0;
+            }
+            button {
+                padding: 0.5rem 1.1rem;
+                cursor: pointer;
+                border: 1px solid #bbb;
+                border-radius: 4px;
+                background: #fff;
+                font-size: 0.95rem;
+            }
+            button:hover {
+                background: #f0f0f0;
+            }
+            button.primary {
+                background: #1a73e8;
+                color: #fff;
+                border-color: #1a73e8;
+            }
+            button.primary:hover {
+                background: #1558b0;
+            }
+            #status {
+                color: #555;
+                font-style: italic;
+                min-height: 1.4rem;
+            }
+            .fp-id {
+                font-family: monospace;
+                font-size: 1.3rem;
+                letter-spacing: 0.08em;
+                padding: 0.6rem 1rem;
+                background: #f4f4f4;
+                border-radius: 4px;
+                margin: 1rem 0 0.25rem;
+                word-break: break-all;
+            }
+            .fp-meta {
+                font-size: 0.85rem;
+                color: #666;
+                margin-bottom: 1.25rem;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+            .card {
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                padding: 0.85rem 1rem;
+                background: #fafafa;
+            }
+            .card h3 {
+                margin: 0 0 0.5rem;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #555;
+            }
+            .card pre {
+                margin: 0;
+                font-size: 0.78rem;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                word-break: break-all;
+                max-height: 160px;
+                overflow-y: auto;
+            }
+            .diff {
+                background: #fff8e1;
+                border-color: #ffc107;
+            }
+            .diff h3 {
+                color: #c17d00;
+            }
+            .badge {
+                display: inline-block;
+                padding: 0.15rem 0.5rem;
+                border-radius: 99px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-left: 0.4rem;
+                vertical-align: middle;
+            }
+            .badge-ok {
+                background: #d4f5dc;
+                color: #1a6b2e;
+            }
+            .badge-warn {
+                background: #fff3cd;
+                color: #856404;
+            }
+            nav {
+                margin-bottom: 1.5rem;
+                font-size: 0.9rem;
+            }
+            nav a {
+                color: #1a73e8;
+                text-decoration: none;
+            }
+            nav a:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <nav><a href="/">← Attestation Demo</a></nav>
+        <h1>Browser Fingerprinting</h1>
+        <p class="subtitle">
+            Deterministic 128-bit MurmurHash3 ID. Stable across reloads, new tabs, and restarts.
+        </p>
+
+        <div class="actions">
+            <button class="primary" id="btnSync">Fingerprint (sync)</button>
+            <button id="btnAsync">Fingerprint (async +voices/audio/webrtc/permissions)</button>
+            <button id="btnCopy" disabled>Copy ID</button>
+        </div>
+
+        <div id="status">Click a button to generate your fingerprint.</div>
+        <div id="fpId" class="fp-id" style="display: none"></div>
+        <div id="fpMeta" class="fp-meta"></div>
+        <div id="grid" class="grid"></div>
+
+        <script type="module">
+            import {
+                getFingerprint,
+                getFingerprintAsync,
+                COMPONENT_NAMES,
+            } from '/src/fingerprint.js';
+
+            const status = document.getElementById('status');
+            const fpIdEl = document.getElementById('fpId');
+            const fpMetaEl = document.getElementById('fpMeta');
+            const grid = document.getElementById('grid');
+            const btnCopy = document.getElementById('btnCopy');
+
+            let lastId = null;
+            let prevId = sessionStorage.getItem('fp_prev_id');
+
+            function render({ id, components, browser }) {
+                const same = prevId && prevId === id;
+                const changed = prevId && prevId !== id;
+
+                fpIdEl.style.display = '';
+                fpIdEl.textContent = id;
+                fpIdEl.title = 'Fingerprint ID';
+
+                const badge = same
+                    ? '<span class="badge badge-ok">unchanged</span>'
+                    : changed
+                      ? '<span class="badge badge-warn">changed since last run</span>'
+                      : '';
+                fpMetaEl.innerHTML =
+                    `Browser: <strong>${browser}</strong>${badge}` +
+                    (prevId && changed ? `<br>Previous: <code>${prevId}</code>` : '');
+
+                sessionStorage.setItem('fp_prev_id', id);
+                prevId = id;
+                lastId = id;
+                btnCopy.disabled = false;
+
+                grid.innerHTML = '';
+                for (const [key, value] of Object.entries(components)) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML =
+                        `<h3>${key}</h3>` + `<pre>${JSON.stringify(value, null, 2)}</pre>`;
+                    grid.appendChild(card);
+                }
+            }
+
+            document.getElementById('btnSync').onclick = () => {
+                status.textContent = 'Collecting…';
+                try {
+                    const t0 = performance.now();
+                    const result = getFingerprint();
+                    const ms = (performance.now() - t0).toFixed(1);
+                    status.textContent = `Done in ${ms} ms (sync, ${Object.keys(result.components).length} components)`;
+                    render(result);
+                } catch (err) {
+                    status.textContent = `Error: ${err.message}`;
+                }
+            };
+
+            document.getElementById('btnAsync').onclick = async () => {
+                status.textContent = 'Collecting async components…';
+                try {
+                    const t0 = performance.now();
+                    const result = await getFingerprintAsync();
+                    const ms = (performance.now() - t0).toFixed(1);
+                    status.textContent = `Done in ${ms} ms (async, ${Object.keys(result.components).length} components)`;
+                    render(result);
+                } catch (err) {
+                    status.textContent = `Error: ${err.message}`;
+                }
+            };
+
+            btnCopy.onclick = () => {
+                if (!lastId) return;
+                navigator.clipboard.writeText(lastId).then(() => {
+                    btnCopy.textContent = 'Copied!';
+                    setTimeout(() => (btnCopy.textContent = 'Copy ID'), 1500);
+                });
+            };
+        </script>
+    </body>
+</html>

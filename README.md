@@ -295,8 +295,13 @@ Client                              Server
 
 ```bash
 npm run example
-# http://localhost:3000
+# http://localhost:3000           — attestation demo
+# http://localhost:3000/fingerprint — fingerprinting demo
 ```
+
+The fingerprinting demo page lets you run both the sync and async collectors
+directly in the browser, view each component's raw value, and compare the ID
+across page reloads to verify stability.
 
 ## Test
 
