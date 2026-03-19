@@ -1,11 +1,11 @@
 {
     "name": "navigator-attestation",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Browser environment attestation via signal collection and validation. Detects automation, headless browsers, spoofing, and virtualization.",
     "type": "module",
     "repository": {
         "type": "git",
-        "url": "https://github.com/libcaptcha/navigator-attestation"
+        "url": "git+https://github.com/libcaptcha/navigator-attestation.git"
     },
     "main": "./src/index.js",
     "types": "./src/index.d.ts",
